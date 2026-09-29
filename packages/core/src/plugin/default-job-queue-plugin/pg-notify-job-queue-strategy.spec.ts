@@ -189,6 +189,24 @@ describe('PgNotifyJobQueueStrategy', () => {
             expect(next).toHaveBeenCalledTimes(2);
         });
 
+        it('releases an already-parked next() when a retry is recorded, so it re-parks with the shorter timeout', async () => {
+            strategy = new PgNotifyJobQueueStrategy({ safetyIntervalMs: 60_000, backoffStrategy: () => 100 });
+            (strategy as any).connectListener = vi.fn().mockResolvedValue(undefined);
+            vi.spyOn(SqlJobQueueStrategy.prototype, 'update').mockResolvedValue(undefined);
+            vi.spyOn(SqlJobQueueStrategy.prototype, 'next').mockResolvedValue(undefined);
+            initPostgres();
+            const pending = strategy.next('video');
+            expect(await settledWithin(pending, 20)).toBe('parked');
+
+            // Another concurrency slot's job fails while this one is parked.
+            const job = new Job({ id: 1, queueName: 'video', data: {}, retries: 1 });
+            job.start();
+            job.fail(new Error('boom'));
+            await strategy.update(job);
+
+            expect(await settledWithin(pending, 20)).toBeUndefined();
+        });
+
         it('builds the listener config from replication master and extra, like TypeORM', () => {
             initPostgres();
             (strategy as any).dataSource.options = {

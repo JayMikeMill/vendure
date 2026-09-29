@@ -1,7 +1,8 @@
 import { JobState } from '@vendure/common/lib/generated-types';
 import { ID } from '@vendure/common/lib/shared-types';
 import { randomUUID } from 'crypto';
-import type { Client, ClientConfig, Notification } from 'pg';
+import type { Client, Notification } from 'pg';
+import type { ConnectionOptions } from 'tls';
 import { DataSource, EntityManager } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
@@ -35,7 +36,33 @@ const MIN_RETRY_WAIT_MS = 50;
  * The listener is idle most of the time. Without keepalive packets a NAT or load balancer
  * can drop the connection without a reset, and the client never notices it is gone.
  */
-const LISTENER_KEEPALIVE: ClientConfig = { keepAlive: true, keepAliveInitialDelayMillis: 60_000 };
+const LISTENER_KEEPALIVE: PgNotifyListenerConnection = {
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 60_000,
+};
+
+/**
+ * @description
+ * Connection details for the listener of the {@link PgNotifyJobQueueStrategy}. These are
+ * passed to the `pg` package's `Client`, which also accepts its other `ClientConfig`
+ * options.
+ *
+ * @docsCategory JobQueue
+ * @since 3.8.0
+ */
+export interface PgNotifyListenerConnection {
+    connectionString?: string;
+    host?: string;
+    port?: number;
+    user?: string;
+    password?: string;
+    database?: string;
+    ssl?: boolean | ConnectionOptions;
+    application_name?: string;
+    keepAlive?: boolean;
+    keepAliveInitialDelayMillis?: number;
+    [option: string]: unknown;
+}
 
 /**
  * @description
@@ -61,7 +88,7 @@ export interface PgNotifyJobQueueStrategyConfig extends PollingJobQueueStrategyC
      *
      * @default undefined
      */
-    listenerConnection?: ClientConfig;
+    listenerConnection?: PgNotifyListenerConnection;
     /**
      * @description
      * How long a blocked call to `next()` waits for a notification before checking the
@@ -136,7 +163,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
      * no waiter to release; this makes that `next()` decline to park at all.
      */
     private readonly stopping = new Set<string>();
-    private readonly listenerConnection?: ClientConfig;
+    private readonly listenerConnection?: PgNotifyListenerConnection;
     private readonly safetyIntervalMs: number;
     /**
      * Whether the database can deliver notifications at all. When false, `next()` never
@@ -221,6 +248,9 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
         if (job.state === JobState.RETRYING && this.backOffStrategy) {
             const delay = this.backOffStrategy(job.queueName, job.attempts, job);
             this.retries.set(job.id, { queueName: job.queueName, dueAt: Date.now() + delay });
+            // With concurrency above 1, another slot may already be parked with a longer
+            // timeout. Waking it makes it re-park with the retry's timeout.
+            this.wake(job.queueName, false);
         } else {
             this.retries.delete(job.id);
         }
@@ -356,10 +386,16 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
         return timeout;
     }
 
-    private wake(queueName: string) {
+    /**
+     * Releases the `next()` calls parked on a queue. With `remember`, a wake-up which finds
+     * nothing parked is kept for the next call to park.
+     */
+    private wake(queueName: string, remember = true) {
         const waiters = this.waiters.get(queueName);
         if (!waiters?.size) {
-            this.pendingWakes.add(queueName);
+            if (remember) {
+                this.pendingWakes.add(queueName);
+            }
             return;
         }
         for (const done of [...waiters]) {
@@ -377,7 +413,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
      * Builds the listener's connection details from the DataSource, so that a project
      * which already works needs no further configuration.
      */
-    private clientConfig(): ClientConfig {
+    private clientConfig(): PgNotifyListenerConnection {
         if (this.listenerConnection) {
             return { ...LISTENER_KEEPALIVE, ...this.listenerConnection };
         }
@@ -392,7 +428,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
             user: credentials?.username,
             password: credentials?.password as string | undefined,
             database: credentials?.database,
-            ssl: credentials?.ssl as ClientConfig['ssl'],
+            ssl: credentials?.ssl as PgNotifyListenerConnection['ssl'],
             application_name: options?.applicationName,
             ...LISTENER_KEEPALIVE,
             ...options?.extra,
@@ -418,7 +454,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
             return;
         }
         client.on('notification', message => {
-            if (message.payload) {
+            if (message.payload && !message.payload.startsWith(PROBE_PREFIX)) {
                 this.wake(message.payload);
             }
         });
@@ -452,9 +488,6 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
                 );
                 return;
             }
-            // Notifications heard before any queue parked say nothing useful: the queues
-            // were polling and saw those jobs anyway.
-            this.pendingWakes.clear();
             this.listener = client;
             this.reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
             Logger.verbose(`Job queue listening on "${CHANNEL}"`, loggerCtx);
