@@ -16,7 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { initialData } from '../../../e2e-common/e2e-initial-data';
 import { TEST_SETUP_TIMEOUT_MS, testConfig } from '../../../e2e-common/test-config';
 
-const POLL_INTERVAL = 1000;
+const POLL_INTERVAL = 2000;
 const RETRY_BACKOFF = 3000;
 
 @VendurePlugin({ imports: [PluginCommonModule] })
@@ -91,9 +91,9 @@ describe.skipIf(process.env.DB !== 'postgres')('PgNotifyJobQueueStrategy', () =>
             await sleep(POLL_INTERVAL * 1.5);
         }
 
-        // Polling every 1000ms would put all five under 400ms about 1% of the time.
-        expect(Math.max(...latencies)).toBeLessThan(400);
-    });
+        // Polling every 2000ms would put all five under 700ms about 0.5% of the time.
+        expect(Math.max(...latencies)).toBeLessThan(700);
+    }, 30_000);
 
     it('retries a failed job once its backoff elapses, not at the safety interval', async () => {
         await PgNotifyTestPlugin.queue.add({ id: 'retry', failOnce: true }, { retries: 1 });
@@ -123,7 +123,7 @@ describe.skipIf(process.env.DB !== 'postgres')('PgNotifyJobQueueStrategy', () =>
         );
 
         const [startedAt] = await waitForAttempts('committed', 1, 5_000);
-        expect(startedAt - addedAt).toBeLessThan(400);
+        expect(startedAt - addedAt).toBeLessThan(700);
         expect(PgNotifyTestPlugin.attempts.has('rolled-back')).toBe(false);
     });
 });
