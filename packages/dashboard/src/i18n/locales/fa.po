@@ -436,6 +436,7 @@ msgstr "محل انبار با موفقیت ایجاد شد"
 msgid "No widgets to add"
 msgstr "ابزارکی برای افزودن وجود ندارد"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_product-variants/product-variants_.$id.tsx
@@ -816,6 +817,14 @@ msgstr "یک مشتری انتخاب کنید تا ادامه دهید"
 msgid "Successfully assigned option group"
 msgstr "گروه گزینه با موفقیت تخصیص داده شد"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Marks the account as verified without the customer having to use a verification email."
+msgstr ""
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Allocated refund amounts must equal refund total"
+msgstr ""
+
 #: src/app/routes/_authenticated/_shipping-methods/components/shipping-method-test-result-wrapper.tsx
 msgid "Run Test"
 msgstr "اجرای آزمون"
@@ -934,6 +943,10 @@ msgstr "تایید پیمایش"
 msgid "Complete draft"
 msgstr "تکمیل پیش‌نویس"
 
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "{refundedAmount} was refunded in {refundCount} refund(s), but \"{failedTargetLabel}\" failed: {failureReason}. Check the order's payments before trying again."
+msgstr ""
+
 #: src/app/routes/_authenticated/_administrators/administrators.tsx
 #: src/app/routes/_authenticated/_api-keys/api-keys_.$id.tsx
 #: src/app/routes/_authenticated/_collections/collections_.$id.tsx
@@ -1036,6 +1049,10 @@ msgstr "یادداشت بازپرداخت را وارد کنید"
 #: src/app/routes/_authenticated/_orders/orders_.draft.$id.tsx
 msgid "Order line removed"
 msgstr "خط سفارش حذف شد"
+
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Setting a password here verifies the account immediately. Left empty, the customer has no password and cannot log in until they set one."
+msgstr ""
 
 #: src/lib/components/layout/channel-switcher.tsx
 msgid "Content:"
@@ -1160,6 +1177,8 @@ msgid "Failed to update zone"
 msgstr "به‌روزرسانی منطقه ناموفق بود"
 
 #: src/app/routes/_authenticated/_administrators/administrators_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_profile/profile.tsx
 #: src/app/routes/_authenticated/_profile/profile.tsx
 #: src/lib/components/login/login-form.tsx
@@ -1233,6 +1252,7 @@ msgstr "لغو اقلام سفارش ناموفق بود"
 msgid "Transaction ID"
 msgstr "شناسه تراکنش"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
 #: src/app/routes/_authenticated/_product-variants/product-variants_.$id.tsx
 msgid "Allocated"
 msgstr "تخصیص داده شده"
@@ -1460,6 +1480,8 @@ msgstr "قیمت‌ها شامل مالیات برای منطقه مالیاتی
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
+#: src/lib/components/data-input/slug-input.tsx
+#: src/lib/components/data-input/slug-input.tsx
 msgid "This field is required"
 msgstr ""
 
@@ -1796,6 +1818,10 @@ msgstr "کشورها"
 msgid "Loading metrics…"
 msgstr "در حال بارگذاری معیارها…"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Customer account verified"
+msgstr ""
+
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #~ msgid "Failed to create product options"
@@ -1917,6 +1943,7 @@ msgstr "درج جدول {row} در {col}"
 #: src/app/routes/_authenticated/_api-keys/components/rotate-api-key-button.tsx
 #: src/app/routes/_authenticated/_assets/components/manage-tags-dialog.tsx
 #: src/app/routes/_authenticated/_collections/components/move-collections-dialog.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_orders/components/add-manual-payment-dialog.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfill-order-dialog.tsx
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
@@ -1977,8 +2004,8 @@ msgstr "دسته‌بندی مالیاتی جدید"
 #~ msgstr "افزودن گزینه"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "Partial refund completed"
-msgstr "بازپرداخت جزئی تکمیل شد"
+#~ msgid "Partial refund completed"
+#~ msgstr "بازپرداخت جزئی تکمیل شد"
 
 #: src/app/routes/_authenticated/_orders/orders_.draft.$id.tsx
 msgid "Set custom fields"
@@ -2176,6 +2203,10 @@ msgstr "پروفایل با موفقیت به‌روزرسانی شد"
 #: src/app/routes/_authenticated/_orders/components/payment-details.tsx
 msgid "Payment method"
 msgstr "روش پرداخت"
+
+#: src/app/routes/_authenticated/_orders/components/payment-details.tsx
+msgid "Destination"
+msgstr ""
 
 #: src/app/routes/_authenticated/_orders/orders_.$id_.modify.tsx
 #: src/app/routes/_authenticated/_orders/orders_.$id_.modify.tsx
@@ -3199,6 +3230,10 @@ msgstr "گزینه‌های محصول"
 msgid "Select country"
 msgstr "انتخاب کشور"
 
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Refund only partially completed"
+msgstr ""
+
 #: src/app/routes/_authenticated/_products/components/generate-missing-variants-dialog.tsx
 #: src/app/routes/_authenticated/_products/components/generate-variants-panel.tsx
 msgid "Creating..."
@@ -3770,6 +3805,10 @@ msgstr "دسته‌بندی"
 msgid "Moving..."
 msgstr "در حال جابجایی..."
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Needed only for a customer who has no password yet, since that account cannot be logged into. Leave empty for a customer who already has one."
+msgstr ""
+
 #: src/lib/components/shared/assign-to-channel-dialog.tsx
 msgid "Assign"
 msgstr "اختصاص دادن"
@@ -4053,8 +4092,8 @@ msgid "New Stock Location"
 msgstr "محل انبار جدید"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "{successfulRefundCount} payment(s) refunded before failure. Check order history for details."
-msgstr "{successfulRefundCount} پرداخت قبل از خطا بازگردانده شد. برای جزئیات به تاریخچه سفارش مراجعه کنید."
+#~ msgid "{successfulRefundCount} payment(s) refunded before failure. Check order history for details."
+#~ msgstr "{successfulRefundCount} پرداخت قبل از خطا بازگردانده شد. برای جزئیات به تاریخچه سفارش مراجعه کنید."
 
 #: src/lib/components/data-input/relation-selector.tsx
 msgid "Select item"
@@ -4110,6 +4149,10 @@ msgstr "رمزهای عبور مطابقت ندارند"
 #: src/lib/components/data-input/datetime-input.tsx
 msgid "Pick a date and time"
 msgstr "تاریخ و زمان را انتخاب کنید"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This field is invalid"
+msgstr ""
 
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
@@ -4327,6 +4370,10 @@ msgstr "ایجاد گروه مشتری ناموفق بود"
 msgid "Failed to create role"
 msgstr "ایجاد نقش ناموفق بود"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Payment methods"
+msgstr ""
+
 #: src/app/routes/_authenticated/_products/products_.$id.tsx
 msgid "Product name"
 msgstr "نام محصول"
@@ -4372,7 +4419,7 @@ msgstr "افزودن گروه گزینه"
 msgid "All"
 msgstr "همه"
 
-#. placeholder {0}: formatCurrency(refund.amountToRefundTotal, order.currencyCode)
+#. placeholder {0}: formatCurrency(refund.refundTotal, order.currencyCode)
 #: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
 msgid "Refund {0}"
 msgstr "بازپرداخت {0}"
@@ -4522,6 +4569,11 @@ msgstr "افزودن مورد"
 msgid "Successfully created API key"
 msgstr "کلید API با موفقیت ایجاد شد"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Verify account"
+msgstr ""
+
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
 msgid "Loading preview…"
 msgstr "در حال بارگذاری پیش‌نمایش..."
@@ -4550,6 +4602,10 @@ msgstr "حذف گروه گزینه"
 #: src/app/routes/_authenticated/_system/scheduled-tasks.tsx
 msgid "Description"
 msgstr "توضیحات"
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Every refund destination must draw from a payment"
+msgstr ""
 
 #: src/app/routes/_authenticated/_countries/countries_.$id.tsx
 #: src/app/routes/_authenticated/_countries/countries.tsx
@@ -4616,6 +4672,10 @@ msgstr "فیلتر"
 #: src/app/routes/_authenticated/_administrators/administrators_.$id.tsx
 msgid "Failed to update administrator"
 msgstr "به‌روزرسانی مدیر ناموفق بود"
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "No payment or destination was selected"
+msgstr ""
 
 #: src/lib/components/data-table/views-sheet.tsx
 msgid "Manage your personal saved views for this table"
@@ -4831,6 +4891,10 @@ msgstr "پرداخت تسویه شده"
 #: src/i18n/common-strings.ts
 msgid "orderState.Shipped"
 msgstr "ارسال شده"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This cannot be saved until the following are fixed:"
+msgstr ""
 
 #: src/app/routes/_authenticated/_system/healthchecks.tsx
 #~ msgid "Monitored Resources"
@@ -5579,6 +5643,10 @@ msgstr "این یک نقش پیش‌فرض است و نمی‌تواند تغی�
 msgid "My saved views"
 msgstr "نماهای ذخیره شده من"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Other refund destinations"
+msgstr ""
+
 #: src/app/routes/_authenticated/_shipping-methods/components/test-address-form.tsx
 msgid "State / Province"
 msgstr "ایالت / استان"
@@ -5770,8 +5838,8 @@ msgid "Password reset requested"
 msgstr "درخواست بازنشانی رمز عبور"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "Allocated payment amount must equal refund total"
-msgstr "مبلغ پرداخت تخصیص‌یافته باید برابر با کل بازپرداخت باشد"
+#~ msgid "Allocated payment amount must equal refund total"
+#~ msgstr "مبلغ پرداخت تخصیص‌یافته باید برابر با کل بازپرداخت باشد"
 
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #~ msgid "e.g. Small"
@@ -5871,6 +5939,10 @@ msgstr "حذف"
 #: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 msgid "Failed to update customer"
 msgstr "به‌روزرسانی مشتری ناموفق بود"
+
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Draw from"
+msgstr ""
 
 #: src/app/routes/_authenticated/_products/products_.$id.tsx
 msgid "Remove option groups?"
@@ -6202,6 +6274,10 @@ msgstr "دنبال کردن موجودی به طور پیش‌فرض"
 msgid "{selected} of {total} selected"
 msgstr "{selected} از {total} انتخاب‌شده"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Verify"
+msgstr ""
+
 #: src/app/routes/_authenticated/_shipping-methods/shipping-methods_.$id.tsx
 msgid "Successfully created shipping method"
 msgstr "روش ارسال با موفقیت ایجاد شد"
@@ -6251,6 +6327,7 @@ msgstr "انتخاب {0}"
 msgid "New facet values to add:"
 msgstr "مقادیر ویژگی جدید برای افزودن:"
 
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 msgid "Failed to process refund"
@@ -6864,6 +6941,11 @@ msgstr "مشاهده نتیجه"
 msgid "Rows per page"
 msgstr "ردیف در هر صفحه"
 
+#. placeholder {0}: formatCurrency(capacity, order.currencyCode)
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Amounts drawn from payment {label} exceed its refundable amount of {0}"
+msgstr ""
+
 #: src/app/routes/_authenticated/_collections/components/move-collections-dialog.tsx
 msgid "Loading collections..."
 msgstr "در حال بارگذاری مجموعه‌ها..."
@@ -7098,8 +7180,8 @@ msgid "Fulfillment ID"
 msgstr "شناسه تحویل"
 
 #: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
-msgid "Select payments to refund"
-msgstr "پرداخت‌ها را برای بازپرداخت انتخاب کنید"
+#~ msgid "Select payments to refund"
+#~ msgstr "پرداخت‌ها را برای بازپرداخت انتخاب کنید"
 
 #: src/lib/components/shared/error-page.tsx
 msgid "The page you are looking for does not exist or may have been moved."
@@ -7156,6 +7238,10 @@ msgstr "نمای عمومی \"{viewName}\" اعمال شد"
 #: src/app/routes/_authenticated/_customers/components/customer-history/customer-history-utils.tsx
 msgid "Customer registered"
 msgstr "مشتری ثبت‌نام شد"
+
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Remaining"
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/framework/defaults.ts

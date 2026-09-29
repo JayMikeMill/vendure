@@ -436,6 +436,7 @@ msgstr "Successfully created stock location"
 msgid "No widgets to add"
 msgstr "No widgets to add"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_product-variants/product-variants_.$id.tsx
@@ -816,6 +817,14 @@ msgstr "Select a customer to continue"
 msgid "Successfully assigned option group"
 msgstr "Successfully assigned option group"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Marks the account as verified without the customer having to use a verification email."
+msgstr "Marks the account as verified without the customer having to use a verification email."
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Allocated refund amounts must equal refund total"
+msgstr "Allocated refund amounts must equal refund total"
+
 #: src/app/routes/_authenticated/_shipping-methods/components/shipping-method-test-result-wrapper.tsx
 msgid "Run Test"
 msgstr "Run Test"
@@ -934,6 +943,10 @@ msgstr "Confirm navigation"
 msgid "Complete draft"
 msgstr "Complete draft"
 
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "{refundedAmount} was refunded in {refundCount} refund(s), but \"{failedTargetLabel}\" failed: {failureReason}. Check the order's payments before trying again."
+msgstr "{refundedAmount} was refunded in {refundCount} refund(s), but \"{failedTargetLabel}\" failed: {failureReason}. Check the order's payments before trying again."
+
 #: src/app/routes/_authenticated/_administrators/administrators.tsx
 #: src/app/routes/_authenticated/_api-keys/api-keys_.$id.tsx
 #: src/app/routes/_authenticated/_collections/collections_.$id.tsx
@@ -1036,6 +1049,10 @@ msgstr "Enter refund note"
 #: src/app/routes/_authenticated/_orders/orders_.draft.$id.tsx
 msgid "Order line removed"
 msgstr "Order line removed"
+
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Setting a password here verifies the account immediately. Left empty, the customer has no password and cannot log in until they set one."
+msgstr "Setting a password here verifies the account immediately. Left empty, the customer has no password and cannot log in until they set one."
 
 #: src/lib/components/layout/channel-switcher.tsx
 msgid "Content:"
@@ -1160,6 +1177,8 @@ msgid "Failed to update zone"
 msgstr "Failed to update zone"
 
 #: src/app/routes/_authenticated/_administrators/administrators_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_profile/profile.tsx
 #: src/app/routes/_authenticated/_profile/profile.tsx
 #: src/lib/components/login/login-form.tsx
@@ -1233,6 +1252,7 @@ msgstr "Failed to cancel order items"
 msgid "Transaction ID"
 msgstr "Transaction ID"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
 #: src/app/routes/_authenticated/_product-variants/product-variants_.$id.tsx
 msgid "Allocated"
 msgstr "Allocated"
@@ -1460,6 +1480,8 @@ msgstr "Prices include tax for default tax zone"
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
+#: src/lib/components/data-input/slug-input.tsx
+#: src/lib/components/data-input/slug-input.tsx
 msgid "This field is required"
 msgstr "This field is required"
 
@@ -1796,6 +1818,10 @@ msgstr "Countries"
 msgid "Loading metrics…"
 msgstr "Loading metrics…"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Customer account verified"
+msgstr "Customer account verified"
+
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #~ msgid "Failed to create product options"
@@ -1917,6 +1943,7 @@ msgstr "Insert {row} by {col} table"
 #: src/app/routes/_authenticated/_api-keys/components/rotate-api-key-button.tsx
 #: src/app/routes/_authenticated/_assets/components/manage-tags-dialog.tsx
 #: src/app/routes/_authenticated/_collections/components/move-collections-dialog.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_orders/components/add-manual-payment-dialog.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfill-order-dialog.tsx
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
@@ -1977,8 +2004,8 @@ msgstr "New tax category"
 #~ msgstr "Add option"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "Partial refund completed"
-msgstr "Partial refund completed"
+#~ msgid "Partial refund completed"
+#~ msgstr "Partial refund completed"
 
 #: src/app/routes/_authenticated/_orders/orders_.draft.$id.tsx
 msgid "Set custom fields"
@@ -2176,6 +2203,10 @@ msgstr "Successfully updated profile"
 #: src/app/routes/_authenticated/_orders/components/payment-details.tsx
 msgid "Payment method"
 msgstr "Payment method"
+
+#: src/app/routes/_authenticated/_orders/components/payment-details.tsx
+msgid "Destination"
+msgstr "Destination"
 
 #: src/app/routes/_authenticated/_orders/orders_.$id_.modify.tsx
 #: src/app/routes/_authenticated/_orders/orders_.$id_.modify.tsx
@@ -2806,7 +2837,7 @@ msgstr "Cancelled"
 #. js-lingui-explicit-id
 #: src/i18n/common-strings.ts
 msgid "fulfillmentState.Created"
-msgstr "fulfillmentState.Created"
+msgstr "Created"
 
 #. js-lingui-explicit-id
 #: src/i18n/common-strings.ts
@@ -3198,6 +3229,10 @@ msgstr "Product Options"
 #: src/lib/components/shared/country-selector.tsx
 msgid "Select country"
 msgstr "Select country"
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Refund only partially completed"
+msgstr "Refund only partially completed"
 
 #: src/app/routes/_authenticated/_products/components/generate-missing-variants-dialog.tsx
 #: src/app/routes/_authenticated/_products/components/generate-variants-panel.tsx
@@ -3770,6 +3805,10 @@ msgstr "Category"
 msgid "Moving..."
 msgstr "Moving..."
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Needed only for a customer who has no password yet, since that account cannot be logged into. Leave empty for a customer who already has one."
+msgstr "Needed only for a customer who has no password yet, since that account cannot be logged into. Leave empty for a customer who already has one."
+
 #: src/lib/components/shared/assign-to-channel-dialog.tsx
 msgid "Assign"
 msgstr "Assign"
@@ -4053,8 +4092,8 @@ msgid "New Stock Location"
 msgstr "New Stock Location"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "{successfulRefundCount} payment(s) refunded before failure. Check order history for details."
-msgstr "{successfulRefundCount} payment(s) refunded before failure. Check order history for details."
+#~ msgid "{successfulRefundCount} payment(s) refunded before failure. Check order history for details."
+#~ msgstr "{successfulRefundCount} payment(s) refunded before failure. Check order history for details."
 
 #: src/lib/components/data-input/relation-selector.tsx
 msgid "Select item"
@@ -4110,6 +4149,10 @@ msgstr "Passwords do not match"
 #: src/lib/components/data-input/datetime-input.tsx
 msgid "Pick a date and time"
 msgstr "Pick a date and time"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This field is invalid"
+msgstr "This field is invalid"
 
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
@@ -4327,6 +4370,10 @@ msgstr "Failed to create customer group"
 msgid "Failed to create role"
 msgstr "Failed to create role"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Payment methods"
+msgstr "Payment methods"
+
 #: src/app/routes/_authenticated/_products/products_.$id.tsx
 msgid "Product name"
 msgstr "Product name"
@@ -4372,7 +4419,7 @@ msgstr "Add option group"
 msgid "All"
 msgstr "All"
 
-#. placeholder {0}: formatCurrency(refund.amountToRefundTotal, order.currencyCode)
+#. placeholder {0}: formatCurrency(refund.refundTotal, order.currencyCode)
 #: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
 msgid "Refund {0}"
 msgstr "Refund {0}"
@@ -4522,6 +4569,11 @@ msgstr "Add item"
 msgid "Successfully created API key"
 msgstr "Successfully created API key"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Verify account"
+msgstr "Verify account"
+
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
 msgid "Loading preview…"
 msgstr "Loading preview…"
@@ -4550,6 +4602,10 @@ msgstr "Remove option group"
 #: src/app/routes/_authenticated/_system/scheduled-tasks.tsx
 msgid "Description"
 msgstr "Description"
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Every refund destination must draw from a payment"
+msgstr "Every refund destination must draw from a payment"
 
 #: src/app/routes/_authenticated/_countries/countries_.$id.tsx
 #: src/app/routes/_authenticated/_countries/countries.tsx
@@ -4616,6 +4672,10 @@ msgstr "Filter"
 #: src/app/routes/_authenticated/_administrators/administrators_.$id.tsx
 msgid "Failed to update administrator"
 msgstr "Failed to update administrator"
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "No payment or destination was selected"
+msgstr "No payment or destination was selected"
 
 #: src/lib/components/data-table/views-sheet.tsx
 msgid "Manage your personal saved views for this table"
@@ -4831,6 +4891,10 @@ msgstr "Payment settled"
 #: src/i18n/common-strings.ts
 msgid "orderState.Shipped"
 msgstr "Shipped"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This cannot be saved until the following are fixed:"
+msgstr "This cannot be saved until the following are fixed:"
 
 #: src/app/routes/_authenticated/_system/healthchecks.tsx
 #~ msgid "Monitored Resources"
@@ -5579,6 +5643,10 @@ msgstr "This is a default Role and cannot be modified"
 msgid "My saved views"
 msgstr "My saved views"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Other refund destinations"
+msgstr "Other refund destinations"
+
 #: src/app/routes/_authenticated/_shipping-methods/components/test-address-form.tsx
 msgid "State / Province"
 msgstr "State / Province"
@@ -5770,8 +5838,8 @@ msgid "Password reset requested"
 msgstr "Password reset requested"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "Allocated payment amount must equal refund total"
-msgstr "Allocated payment amount must equal refund total"
+#~ msgid "Allocated payment amount must equal refund total"
+#~ msgstr "Allocated payment amount must equal refund total"
 
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #~ msgid "e.g. Small"
@@ -5871,6 +5939,10 @@ msgstr "Remove"
 #: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 msgid "Failed to update customer"
 msgstr "Failed to update customer"
+
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Draw from"
+msgstr "Draw from"
 
 #: src/app/routes/_authenticated/_products/products_.$id.tsx
 msgid "Remove option groups?"
@@ -6202,6 +6274,10 @@ msgstr "Track inventory by default"
 msgid "{selected} of {total} selected"
 msgstr "{selected} of {total} selected"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Verify"
+msgstr "Verify"
+
 #: src/app/routes/_authenticated/_shipping-methods/shipping-methods_.$id.tsx
 msgid "Successfully created shipping method"
 msgstr "Successfully created shipping method"
@@ -6251,6 +6327,7 @@ msgstr "Select {0}s"
 msgid "New facet values to add:"
 msgstr "New facet values to add:"
 
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 msgid "Failed to process refund"
@@ -6864,6 +6941,11 @@ msgstr "View result"
 msgid "Rows per page"
 msgstr "Rows per page"
 
+#. placeholder {0}: formatCurrency(capacity, order.currencyCode)
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Amounts drawn from payment {label} exceed its refundable amount of {0}"
+msgstr "Amounts drawn from payment {label} exceed its refundable amount of {0}"
+
 #: src/app/routes/_authenticated/_collections/components/move-collections-dialog.tsx
 msgid "Loading collections..."
 msgstr "Loading collections..."
@@ -7098,8 +7180,8 @@ msgid "Fulfillment ID"
 msgstr "Fulfillment ID"
 
 #: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
-msgid "Select payments to refund"
-msgstr "Select payments to refund"
+#~ msgid "Select payments to refund"
+#~ msgstr "Select payments to refund"
 
 #: src/lib/components/shared/error-page.tsx
 msgid "The page you are looking for does not exist or may have been moved."
@@ -7156,6 +7238,10 @@ msgstr "Applied global view \"{viewName}\""
 #: src/app/routes/_authenticated/_customers/components/customer-history/customer-history-utils.tsx
 msgid "Customer registered"
 msgstr "Customer registered"
+
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Remaining"
+msgstr "Remaining"
 
 #. js-lingui-explicit-id
 #: src/lib/framework/defaults.ts
