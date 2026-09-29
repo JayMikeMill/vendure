@@ -52,10 +52,13 @@ export interface PollingJobQueueStrategyConfig {
     pollInterval?: number | ((queueName: string) => number);
     /**
      * @description
-     * When a poll finds no job, the interval before the next poll doubles, up to this
-     * value. It resets to `pollInterval` as soon as a job is found. Set equal to
-     * `pollInterval` to disable the backoff.
+     * The longest interval in ms between polls of an idle queue. When a poll finds no
+     * job, the interval before the next poll doubles, up to this value. When a poll finds
+     * a job, the interval returns to `pollInterval`.
      *
+     * By default this equals `pollInterval`, so the interval does not change.
+     *
+     * @since 3.8.0
      * @default pollInterval
      */
     maxIdlePollInterval?: number | ((queueName: string) => number);

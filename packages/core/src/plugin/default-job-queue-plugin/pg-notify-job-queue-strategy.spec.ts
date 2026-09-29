@@ -113,8 +113,8 @@ describe('PgNotifyJobQueueStrategy', () => {
             initPostgres();
             manager.query.mockRejectedValue(new Error('connection terminated'));
 
-            // A wake-up which fails to send is late work, not lost work. The transaction
-            // this rides on may be an order being placed.
+            // The job still starts after the safety interval. The caller's transaction may
+            // be an order being placed.
             await expect(strategy.add(job)).resolves.toBe(job);
         });
 

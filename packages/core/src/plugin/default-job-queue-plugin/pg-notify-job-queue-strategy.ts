@@ -74,31 +74,32 @@ export interface PgNotifyListenerConnection {
 export interface PgNotifyJobQueueStrategyConfig extends PollingJobQueueStrategyConfig {
     /**
      * @description
-     * Connection details for the dedicated listener connection.
+     * Connection details for the listener connection.
      *
-     * The listener sits in `LISTEN` indefinitely, so it deliberately does not come from
-     * TypeORM's pool - a pooled connection gets recycled out from under the subscription.
-     * Left unset, the connection is built from the DataSource's own options, so a project
-     * which already works needs no further configuration.
+     * The listener holds one connection open in `LISTEN` for as long as the worker runs,
+     * separate from TypeORM's pool. When this option is not set, the connection details
+     * are taken from `dbConnectionOptions`, including `replication.master` and `extra`.
      *
-     * Set this explicitly if the primary connection goes through a connection pooler:
-     * poolers in transaction mode multiplex connections and silently drop `LISTEN`, so the
-     * listener should be pointed at the direct database host. If the listener does not
-     * receive a test notification on connect, the strategy logs a warning and polls.
+     * Set this option when `dbConnectionOptions` points at a connection pooler in
+     * transaction mode, such as PgBouncer, Supavisor, or the pooled endpoint of Neon or
+     * Supabase. Such a pooler accepts `LISTEN` but never delivers notifications. Point the
+     * listener at the direct database host, or at a pooler port in session mode.
+     *
+     * On connect, the listener sends itself a test notification. If it does not arrive
+     * within 3 seconds, the strategy logs a warning and the queues poll at `pollInterval`
+     * until the process restarts.
      *
      * @default undefined
      */
     listenerConnection?: PgNotifyListenerConnection;
     /**
      * @description
-     * How long a blocked call to `next()` waits for a notification before checking the
-     * database anyway.
+     * The longest time a queue waits for a notification before it checks the database
+     * again.
      *
-     * This is a safety net, not a poll. `NOTIFY` is fire-and-forget: Postgres does not
-     * queue notifications for a listener which is not connected, so a wake-up sent while
-     * this process was reconnecting is simply lost. Without this timeout the corresponding
-     * job would stay `PENDING` indefinitely. With it, the worst case for a lost
-     * notification is one interval of lateness.
+     * Postgres does not store notifications for a listener which is disconnected. A job
+     * whose notification was missed, for example one retried by a worker which has since
+     * exited, is picked up at the latest after this interval.
      *
      * @default 300_000
      */
@@ -107,34 +108,27 @@ export interface PgNotifyJobQueueStrategyConfig extends PollingJobQueueStrategyC
 
 /**
  * @description
- * A {@link JobQueueStrategy} which is woken by Postgres `LISTEN`/`NOTIFY` rather than
- * polling the database for work.
+ * A {@link JobQueueStrategy} which waits for Postgres `LISTEN`/`NOTIFY` instead of
+ * polling the database for jobs. It extends {@link SqlJobQueueStrategy}, so jobs are
+ * stored, locked and listed in the Admin UI in the same way.
  *
- * {@link SqlJobQueueStrategy} finds jobs by asking: each queue runs a
- * `BEGIN` / `SELECT ... FOR UPDATE` / `COMMIT` every `pollInterval` ms, with no backoff
- * when the answer keeps being "nothing". With the database on the same machine that is
- * free and unremarkable. With it on a managed host reached over the network - and
- * especially one which meters bandwidth - four idle queues cost on the order of 1.6
- * million queries a day whether or not a single request is served.
+ * When a queue has no job, `next()` waits until one of these happens:
  *
- * This strategy replaces the asking with being told, and inherits everything else from
- * `SqlJobQueueStrategy` - `update`, `findMany`, the `FOR UPDATE` row locking and the
- * `InspectableJobQueueStrategy` surface which the Admin UI's job list reads.
+ * - `add()` commits a job to that queue. The notification is sent in the same
+ *   transaction as the insert, so it arrives on commit and never on rollback.
+ * - A job on that queue is returned to `PENDING`, for example by a worker shutting down.
+ * - A retry which this worker scheduled becomes due.
+ * - The listener connection is lost.
+ * - `safetyIntervalMs` passes.
  *
- * Measured on an otherwise idle project with four queues, against a local Postgres:
+ * While the listener is not connected, queues poll at `pollInterval`, backing off up to
+ * `maxIdlePollInterval` if it is set.
  *
- * | | `SqlJobQueueStrategy` | this strategy |
- * | --- | --- | --- |
- * | `job_record` queries / 30s | 564 | 0 |
- * | projected per day | 1,623,887 | ~2,304 |
- * | job pickup latency | 180ms | 76-79ms |
- *
- * Jobs also start *faster*, because a notification arrives when the row is committed
- * rather than at the next tick of a timer.
+ * Each `add()` makes one extra database round trip to send the notification.
  *
  * @example
  * ```ts
- * import { DefaultJobQueuePlugin, VendureConfig } from '(at)vendure/core';
+ * import { DefaultJobQueuePlugin, VendureConfig } from '\@vendure/core';
  *
  * export const config: VendureConfig = {
  *   // ...
@@ -144,9 +138,12 @@ export interface PgNotifyJobQueueStrategyConfig extends PollingJobQueueStrategyC
  * };
  * ```
  *
+ * If `dbConnectionOptions` points at a connection pooler in transaction mode, set
+ * `listenerConnection` to the direct database host. See
+ * {@link PgNotifyJobQueueStrategyConfig}.
+ *
  * Requires Postgres. On any other database the strategy logs a warning during
- * bootstrap and behaves exactly like {@link SqlJobQueueStrategy}, polling at
- * `pollInterval`.
+ * bootstrap and behaves like {@link SqlJobQueueStrategy}.
  *
  * @docsCategory JobQueue
  * @since 3.8.0
@@ -158,16 +155,17 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
     /** Queue name -> the `next()` calls currently parked on it. */
     private readonly waiters = new Map<string, Set<() => void>>();
     /**
-     * Queues which have been stopped and not restarted. `stop()` can be called while a
-     * `next()` is between asking the database and parking, in which case waking it finds
-     * no waiter to release; this makes that `next()` decline to park at all.
+     * Queues which have been stopped and not restarted. `stop()` can run while a `next()`
+     * is between its query and parking, so `wake()` finds nothing to release. A `next()`
+     * on a queue in this set does not park.
      */
     private readonly stopping = new Set<string>();
     private readonly listenerConnection?: PgNotifyListenerConnection;
     private readonly safetyIntervalMs: number;
     /**
      * Whether the database can deliver notifications at all. When false, `next()` never
-     * parks, which is what makes a misconfigured project slower rather than broken.
+     * parks and the queues poll. Parking on a database which never notifies would leave
+     * every job waiting for the safety interval.
      */
     private notifySupported = false;
     /**
@@ -204,16 +202,15 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
                 loggerCtx,
             );
         }
-        // The listener is opened lazily, by the first queue which actually parks - see
-        // `ensureListener()`. The config is loaded by the server process as well as the
-        // worker, and only the worker calls `next()`, so connecting here would leave the
-        // server holding a Postgres connection it never reads from.
+        // The first `next()` opens the listener, through `ensureListener()`. The server
+        // process also calls `init()`, but only the worker calls `next()`. Connecting here
+        // would give the server a Postgres connection which it never reads from.
     }
 
     /**
-     * Asks the database once; if it has nothing, waits to be told rather than asking
-     * again. Returning immediately when a job is already waiting is what lets a backlog
-     * drain at full speed - only an empty queue ever parks.
+     * Queries the database once. If there is no job, parks until a notification or a
+     * timeout, then queries once more. A job found by the first query is returned
+     * immediately, so a backlog drains at the same speed as with polling.
      */
     async next(queueName: string): Promise<Job | undefined> {
         const job = await super.next(queueName);
@@ -257,14 +254,13 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
     }
 
     /**
-     * Enqueues the job, then wakes whoever is waiting on that queue.
+     * Inserts the job, then sends a notification for its queue.
      *
-     * The `pg_notify` deliberately rides the *same* manager as the insert. `add()` uses
-     * the request's transactional repository when it is given a `ctx`, and Postgres holds
-     * notifications until `COMMIT` - so the worker is woken exactly when the row becomes
-     * visible to it, and not at all if the transaction rolls back. Notifying over a
-     * separate connection would race the commit: the worker would wake, query, find an
-     * empty table, and sleep until the safety interval expired.
+     * The `pg_notify` runs on the same `EntityManager` as the insert. With a `ctx`, that
+     * is the request's transaction. Postgres delivers the notification on `COMMIT`, when
+     * the row becomes visible to the worker, and discards it on rollback. A notification
+     * sent over a separate connection could arrive before the commit. The worker would
+     * then find no job and park until the safety interval.
      */
     async add<Data extends JobData<Data> = object>(
         job: Job<Data>,
@@ -286,11 +282,11 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
         try {
             await manager?.query('SELECT pg_notify($1, $2)', [CHANNEL, queueName]);
         } catch (e: any) {
-            // A wake-up which fails to send is late work, not lost work - the safety
-            // interval still picks the job up. `pg_notify` itself only fails on an invalid
-            // channel or a payload over 8000 bytes, neither of which a queue name produces,
-            // so in practice this catches a lost connection. Postgres reports a full
-            // notification queue at COMMIT instead, which this cannot catch.
+            // If the notification is not sent, the job starts at the latest after the safety
+            // interval. `pg_notify` fails only on an invalid channel or a payload over 8000
+            // bytes, and a queue name causes neither. In practice this catches a lost
+            // connection. Postgres reports a full notification queue at `COMMIT`, outside
+            // this call.
             Logger.warn(`Could not notify queue "${queueName}": ${e.message as string}`, loggerCtx);
         }
     }

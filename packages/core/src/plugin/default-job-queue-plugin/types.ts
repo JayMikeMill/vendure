@@ -23,9 +23,17 @@ export interface DefaultJobQueueOptions {
     pollInterval?: number | ((queueName: string) => number);
     /**
      * @description
-     * When a poll finds no job, the interval before the next poll doubles, up to this
-     * value. It resets to `pollInterval` as soon as a job is found.
+     * The longest interval in ms between polls of an idle queue. When a poll finds no
+     * job, the interval before the next poll doubles, up to this value. When a poll finds
+     * a job, the interval returns to `pollInterval`.
      *
+     * This reduces the queries an idle queue makes. The first job after a quiet period
+     * can wait up to this interval before it starts. Can be set to a function which
+     * receives the queue name, so that a queue which needs fast pickup keeps a low value.
+     *
+     * By default this equals `pollInterval`, so the interval does not change.
+     *
+     * @since 3.8.0
      * @default pollInterval
      */
     maxIdlePollInterval?: number | ((queueName: string) => number);
@@ -95,18 +103,15 @@ export interface DefaultJobQueueOptions {
     useDatabaseForBuffer?: boolean;
     /**
      * @description
-     * If set to `true`, the job queue is woken by Postgres `LISTEN`/`NOTIFY` instead of
-     * polling the `job_record` table, using the {@link PgNotifyJobQueueStrategy}.
+     * If set to `true`, the job queue uses the {@link PgNotifyJobQueueStrategy}. An idle
+     * queue then waits for a Postgres `NOTIFY` instead of polling the `job_record` table.
      *
-     * Polling is portable and costs nothing when the database is local, but an idle
-     * project still issues a transaction per queue every `pollInterval` ms forever. On a
-     * managed Postgres reached over the network that is a real and permanent expense, and
-     * one which grows with the number of queues rather than with traffic.
+     * Requires Postgres. On any other database this option logs a warning and the queue
+     * polls at `pollInterval`.
      *
-     * Requires Postgres; on any other database this option logs a warning and is ignored.
-     *
-     * Pass an object instead of `true` to configure the listener - see
-     * {@link PgNotifyJobQueueStrategyConfig}.
+     * If `dbConnectionOptions` points at a connection pooler in transaction mode, such as
+     * PgBouncer, pass an object with `listenerConnection` set to the direct database host.
+     * See {@link PgNotifyJobQueueStrategyConfig}.
      *
      * @default false
      * @since 3.8.0
