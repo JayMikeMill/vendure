@@ -207,7 +207,27 @@ describe('PgNotifyJobQueueStrategy', () => {
                 password: 'p',
                 database: 'd',
                 ssl: { rejectUnauthorized: false },
+                keepAlive: true,
             });
+        });
+
+        it('lets extra override the listener keepalive', () => {
+            initPostgres();
+            (strategy as any).dataSource.options = { type: 'postgres', extra: { keepAlive: false } };
+
+            expect((strategy as any).clientConfig().keepAlive).toBe(false);
+        });
+
+        it('notifies when a deferred job goes back to PENDING, so other workers pick it up', async () => {
+            vi.spyOn(SqlJobQueueStrategy.prototype, 'update').mockResolvedValue(undefined);
+            initPostgres();
+            const job = new Job({ id: 1, queueName: 'video', data: {} });
+            job.start();
+            job.defer();
+
+            await strategy.update(job);
+
+            expect(manager.query).toHaveBeenCalledWith('SELECT pg_notify($1, $2)', ['vendure_job', 'video']);
         });
 
         it('accepts a listener which receives its own probe', async () => {

@@ -2,7 +2,7 @@ import { JobState } from '@vendure/common/lib/generated-types';
 import { ID } from '@vendure/common/lib/shared-types';
 import { randomUUID } from 'crypto';
 import type { Client, ClientConfig, Notification } from 'pg';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 import { Injector } from '../../common/injector';
@@ -31,6 +31,11 @@ const PROBE_PREFIX = '__vendure_job_probe__:';
  */
 const RETRY_GRACE_MS = 5_000;
 const MIN_RETRY_WAIT_MS = 50;
+/**
+ * The listener is idle most of the time. Without keepalive packets a NAT or load balancer
+ * can drop the connection without a reset, and the client never notices it is gone.
+ */
+const LISTENER_KEEPALIVE: ClientConfig = { keepAlive: true, keepAliveInitialDelayMillis: 60_000 };
 
 /**
  * @description
@@ -205,6 +210,11 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
 
     async update(job: Job<any>): Promise<void> {
         await super.update(job);
+        if (job.state === JobState.PENDING && this.notifySupported) {
+            // A job goes back to PENDING when `Job.defer()` hands it back at shutdown, and
+            // nothing else would tell the other workers it is available again.
+            await this.notify(job.queueName, this.dataSource?.manager);
+        }
         if (job.id == null) {
             return;
         }
@@ -238,17 +248,21 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
             jobOptions?.ctx && this.txConnection
                 ? this.txConnection.getRepository(jobOptions.ctx, JobRecord).manager
                 : this.dataSource?.manager;
+        await this.notify(job.queueName, manager);
+        return result;
+    }
+
+    private async notify(queueName: string, manager?: EntityManager) {
         try {
-            await manager?.query('SELECT pg_notify($1, $2)', [CHANNEL, job.queueName]);
+            await manager?.query('SELECT pg_notify($1, $2)', [CHANNEL, queueName]);
         } catch (e: any) {
             // A wake-up which fails to send is late work, not lost work - the safety
             // interval still picks the job up. `pg_notify` itself only fails on an invalid
             // channel or a payload over 8000 bytes, neither of which a queue name produces,
             // so in practice this catches a lost connection. Postgres reports a full
             // notification queue at COMMIT instead, which this cannot catch.
-            Logger.warn(`Could not notify queue "${job.queueName}": ${e.message as string}`, loggerCtx);
+            Logger.warn(`Could not notify queue "${queueName}": ${e.message as string}`, loggerCtx);
         }
-        return result;
     }
 
     async start<Data extends JobData<Data> = object>(
@@ -365,7 +379,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
      */
     private clientConfig(): ClientConfig {
         if (this.listenerConnection) {
-            return this.listenerConnection;
+            return { ...LISTENER_KEEPALIVE, ...this.listenerConnection };
         }
         const options = this.dataSource?.options as PostgresConnectionOptions | undefined;
         // Mirrors how TypeORM's Postgres driver builds its pool config: credentials from
@@ -380,6 +394,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
             database: credentials?.database,
             ssl: credentials?.ssl as ClientConfig['ssl'],
             application_name: options?.applicationName,
+            ...LISTENER_KEEPALIVE,
             ...options?.extra,
         };
     }
