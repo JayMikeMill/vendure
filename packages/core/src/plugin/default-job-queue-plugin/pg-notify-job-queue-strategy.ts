@@ -1,3 +1,6 @@
+import { JobState } from '@vendure/common/lib/generated-types';
+import { ID } from '@vendure/common/lib/shared-types';
+import { randomUUID } from 'crypto';
 import type { Client, ClientConfig, Notification } from 'pg';
 import { DataSource } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
@@ -20,7 +23,14 @@ const MAX_RECONNECT_DELAY_MS = 30_000;
 const INITIAL_RECONNECT_DELAY_MS = 1_000;
 const PROBE_TIMEOUT_MS = 3_000;
 /** Not a valid queue name in practice, so `wake()` finds no waiters for it. */
-const PROBE_PAYLOAD = '__vendure_job_probe__';
+const PROBE_PREFIX = '__vendure_job_probe__:';
+/**
+ * How long a retry is still tracked after its backoff has elapsed. `SqlJobQueueStrategy`
+ * compares the backoff against the row's `updatedAt`, which is set by the database clock,
+ * so a retry can become due slightly later than this process expects.
+ */
+const RETRY_GRACE_MS = 5_000;
+const MIN_RETRY_WAIT_MS = 50;
 
 /**
  * @description
@@ -129,11 +139,17 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
      */
     private notifySupported = false;
     /**
-     * Set when this process cannot receive notifications, e.g. behind a pooler in
-     * transaction mode. `next()` then polls, but `add()` still notifies, so other
-     * workers with a working listener are still woken.
+     * Queues which were woken while nothing was parked on them. The next `next()` to park
+     * on such a queue re-checks the table immediately instead, so a notification which
+     * arrives between asking the database and parking is not lost.
      */
-    private listenerUnavailable = false;
+    private readonly pendingWakes = new Set<string>();
+    /**
+     * Jobs this process has set to `RETRYING`, and when their backoff elapses. Nothing
+     * notifies when a backoff elapses, so a queue with a pending retry parks only until
+     * the retry is due.
+     */
+    private readonly retries = new Map<ID, { queueName: string; dueAt: number }>();
     private listenerStarted = false;
     private shuttingDown = false;
     private reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
@@ -169,11 +185,35 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
      */
     async next(queueName: string): Promise<Job | undefined> {
         const job = await super.next(queueName);
-        if (job || !this.notifySupported || this.listenerUnavailable) {
+        if (job || !this.notifySupported) {
             return job;
         }
+        if (!this.listener) {
+            // Until the listener is connected, and whenever it is down, a notification
+            // would go unheard, so the queue polls at `pollInterval` instead of parking.
+            this.ensureListener();
+            return undefined;
+        }
         await this.waitForWork(queueName);
+        if (this.shuttingDown || this.stopping.has(queueName)) {
+            // `ActiveQueue.stop()` has already stopped tracking jobs, so a job claimed now
+            // would be left `RUNNING`.
+            return undefined;
+        }
         return super.next(queueName);
+    }
+
+    async update(job: Job<any>): Promise<void> {
+        await super.update(job);
+        if (job.id == null) {
+            return;
+        }
+        if (job.state === JobState.RETRYING && this.backOffStrategy) {
+            const delay = this.backOffStrategy(job.queueName, job.attempts, job);
+            this.retries.set(job.id, { queueName: job.queueName, dueAt: Date.now() + delay });
+        } else {
+            this.retries.delete(job.id);
+        }
     }
 
     /**
@@ -202,8 +242,10 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
             await manager?.query('SELECT pg_notify($1, $2)', [CHANNEL, job.queueName]);
         } catch (e: any) {
             // A wake-up which fails to send is late work, not lost work - the safety
-            // interval still picks the job up. Never fail the caller's transaction, which
-            // may be an order being placed, over an optimisation.
+            // interval still picks the job up. `pg_notify` itself only fails on an invalid
+            // channel or a payload over 8000 bytes, neither of which a queue name produces,
+            // so in practice this catches a lost connection. Postgres reports a full
+            // notification queue at COMMIT instead, which this cannot catch.
             Logger.warn(`Could not notify queue "${job.queueName}": ${e.message as string}`, loggerCtx);
         }
         return result;
@@ -240,9 +282,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
     }
 
     /**
-     * Opens the listener on first use. Parking before it is connected is safe:
-     * `connectListener()` wakes every waiter once it is up, so a parked `next()` re-checks
-     * the table rather than sleeping through a notification sent during the gap.
+     * Opens the listener on first use. Queues poll until it is connected.
      */
     private ensureListener() {
         if (this.listenerStarted || this.shuttingDown) {
@@ -256,7 +296,9 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
         if (this.shuttingDown || this.stopping.has(queueName)) {
             return Promise.resolve();
         }
-        this.ensureListener();
+        if (this.pendingWakes.delete(queueName)) {
+            return Promise.resolve();
+        }
         return new Promise<void>(resolve => {
             let settled = false;
             const done = () => {
@@ -268,7 +310,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
                 this.waiters.get(queueName)?.delete(done);
                 resolve();
             };
-            const timer = setTimeout(done, this.safetyIntervalMs);
+            const timer = setTimeout(done, this.parkTimeout(queueName));
             // A parked `next()` is a queue's normal resting state, so this timer is
             // pending almost always. Left referenced, it would hold the process open for
             // the full interval on every shutdown.
@@ -282,9 +324,28 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
         });
     }
 
+    /**
+     * The safety interval, or less if a job this process set to `RETRYING` on this queue
+     * becomes due sooner.
+     */
+    private parkTimeout(queueName: string): number {
+        const now = Date.now();
+        let timeout = this.safetyIntervalMs;
+        for (const [id, retry] of this.retries) {
+            if (now > retry.dueAt + RETRY_GRACE_MS) {
+                // Picked up by another worker, or not due by the database's clock either.
+                this.retries.delete(id);
+            } else if (retry.queueName === queueName) {
+                timeout = Math.min(timeout, Math.max(retry.dueAt - now, MIN_RETRY_WAIT_MS));
+            }
+        }
+        return timeout;
+    }
+
     private wake(queueName: string) {
         const waiters = this.waiters.get(queueName);
-        if (!waiters) {
+        if (!waiters?.size) {
+            this.pendingWakes.add(queueName);
             return;
         }
         for (const done of [...waiters]) {
@@ -307,21 +368,24 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
             return this.listenerConnection;
         }
         const options = this.dataSource?.options as PostgresConnectionOptions | undefined;
-        if (options?.url) {
-            return { connectionString: options.url, ssl: options.ssl as ClientConfig['ssl'] };
-        }
+        // Mirrors how TypeORM's Postgres driver builds its pool config: credentials from
+        // the replication master if there is one, then `extra` on top.
+        const credentials = options?.replication?.master ?? options;
         return {
-            host: options?.host,
-            port: options?.port,
-            user: options?.username,
-            password: options?.password as string | undefined,
-            database: options?.database,
-            ssl: options?.ssl as ClientConfig['ssl'],
+            connectionString: credentials?.url,
+            host: credentials?.host,
+            port: credentials?.port,
+            user: credentials?.username,
+            password: credentials?.password as string | undefined,
+            database: credentials?.database,
+            ssl: credentials?.ssl as ClientConfig['ssl'],
+            application_name: options?.applicationName,
+            ...options?.extra,
         };
     }
 
     private async connectListener(): Promise<void> {
-        if (this.shuttingDown || !this.notifySupported || this.listenerUnavailable) {
+        if (this.shuttingDown || !this.notifySupported) {
             return;
         }
         let client: Client;
@@ -336,8 +400,6 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
                 `Could not load the "pg" package, so the job queue will poll instead: ${e.message as string}`,
                 loggerCtx,
             );
-            this.listenerUnavailable = true;
-            this.wakeAll();
             return;
         }
         client.on('notification', message => {
@@ -353,6 +415,8 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
             if (e) {
                 Logger.warn(`Job queue listener lost: ${e.message}`, loggerCtx);
             }
+            // Parked queues would not hear anything until the listener is back.
+            this.wakeAll();
             this.scheduleReconnect();
         };
         client.on('error', onLost);
@@ -371,17 +435,14 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
                         'which drops LISTEN. Set `listenerConnection` to the direct database host.',
                     loggerCtx,
                 );
-                this.listenerUnavailable = true;
-                this.wakeAll();
                 return;
             }
+            // Notifications heard before any queue parked say nothing useful: the queues
+            // were polling and saw those jobs anyway.
+            this.pendingWakes.clear();
             this.listener = client;
             this.reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
             Logger.verbose(`Job queue listening on "${CHANNEL}"`, loggerCtx);
-            // Anything enqueued while this process was disconnected sent a notification
-            // which nobody heard. Re-check every parked queue once, rather than making
-            // those jobs serve out the safety interval.
-            this.wakeAll();
         } catch (e: any) {
             void client.end().catch(() => undefined);
             Logger.warn(`Job queue listener could not connect: ${e.message as string}`, loggerCtx);
@@ -395,6 +456,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
      * anything, which would otherwise leave every job waiting for the safety interval.
      */
     private probe(client: Client): Promise<boolean> {
+        const payload = PROBE_PREFIX + randomUUID();
         return new Promise(resolve => {
             const finish = (received: boolean) => {
                 clearTimeout(timer);
@@ -402,14 +464,14 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
                 resolve(received);
             };
             const onNotification = (message: Notification) => {
-                if (message.payload === PROBE_PAYLOAD) {
+                if (message.payload === payload) {
                     finish(true);
                 }
             };
             const timer = setTimeout(() => finish(false), PROBE_TIMEOUT_MS);
             client.on('notification', onNotification);
             this.dataSource?.manager
-                .query('SELECT pg_notify($1, $2)', [CHANNEL, PROBE_PAYLOAD])
+                .query('SELECT pg_notify($1, $2)', [CHANNEL, payload])
                 .catch(() => finish(false));
         });
     }

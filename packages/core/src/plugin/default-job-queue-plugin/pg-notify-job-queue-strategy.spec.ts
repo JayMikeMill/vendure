@@ -34,6 +34,12 @@ describe('PgNotifyJobQueueStrategy', () => {
         ]);
     }
 
+    /** Inits on Postgres with a listener which is already connected. */
+    function initPostgres() {
+        strategy.init(mockInjector('postgres'));
+        (strategy as any).listener = { end: () => Promise.resolve() };
+    }
+
     beforeEach(() => {
         strategy = new PgNotifyJobQueueStrategy({ safetyIntervalMs: 60_000 });
         // The listener would otherwise try to reach a real Postgres.
@@ -68,14 +74,14 @@ describe('PgNotifyJobQueueStrategy', () => {
         it('returns a waiting job immediately, so a backlog drains at full speed', async () => {
             const job = new Job({ id: 1, queueName: 'video', data: {} });
             vi.spyOn(SqlJobQueueStrategy.prototype, 'next').mockResolvedValue(job as any);
-            strategy.init(mockInjector('postgres'));
+            initPostgres();
 
             expect(await settledWithin(strategy.next('video'), 50)).toBe(job);
         });
 
         it('parks when the queue is empty instead of asking again', async () => {
             vi.spyOn(SqlJobQueueStrategy.prototype, 'next').mockResolvedValue(undefined);
-            strategy.init(mockInjector('postgres'));
+            initPostgres();
 
             expect(await settledWithin(strategy.next('video'), 50)).toBe('parked');
         });
@@ -83,7 +89,7 @@ describe('PgNotifyJobQueueStrategy', () => {
         it('releases a parked next() on stop, so shutdown is not held up', async () => {
             vi.spyOn(SqlJobQueueStrategy.prototype, 'next').mockResolvedValue(undefined);
             vi.spyOn(SqlJobQueueStrategy.prototype, 'stop').mockResolvedValue(undefined);
-            strategy.init(mockInjector('postgres'));
+            initPostgres();
 
             const pending = strategy.next('video');
             await strategy.stop('video', () => Promise.resolve(undefined));
@@ -94,7 +100,7 @@ describe('PgNotifyJobQueueStrategy', () => {
         it('notifies the queue name so only that queue is woken', async () => {
             const job = new Job({ id: 1, queueName: 'video', data: {} });
             vi.spyOn(SqlJobQueueStrategy.prototype, 'add').mockResolvedValue(job as any);
-            strategy.init(mockInjector('postgres'));
+            initPostgres();
 
             await strategy.add(job);
 
@@ -104,7 +110,7 @@ describe('PgNotifyJobQueueStrategy', () => {
         it('never fails the caller when the notification cannot be sent', async () => {
             const job = new Job({ id: 1, queueName: 'video', data: {} });
             vi.spyOn(SqlJobQueueStrategy.prototype, 'add').mockResolvedValue(job as any);
-            strategy.init(mockInjector('postgres'));
+            initPostgres();
             manager.query.mockRejectedValue(new Error('connection terminated'));
 
             // A wake-up which fails to send is late work, not lost work. The transaction
@@ -112,8 +118,100 @@ describe('PgNotifyJobQueueStrategy', () => {
             await expect(strategy.add(job)).resolves.toBe(job);
         });
 
-        it('accepts a listener which receives its own probe', async () => {
+        it('polls instead of parking while the listener is not connected', async () => {
+            const next = vi.spyOn(SqlJobQueueStrategy.prototype, 'next').mockResolvedValue(undefined);
             strategy.init(mockInjector('postgres'));
+
+            expect(await settledWithin(strategy.next('video'), 50)).toBeUndefined();
+            expect(next).toHaveBeenCalledTimes(1);
+            expect((strategy as any).connectListener).toHaveBeenCalled();
+        });
+
+        it('wakes a parked next() on a notification and returns the job', async () => {
+            const job = new Job({ id: 1, queueName: 'video', data: {} });
+            vi.spyOn(SqlJobQueueStrategy.prototype, 'next')
+                .mockResolvedValueOnce(undefined)
+                .mockResolvedValueOnce(job as any);
+            initPostgres();
+
+            const pending = strategy.next('video');
+            await settledWithin(pending, 10);
+            (strategy as any).wake('video');
+
+            expect(await settledWithin(pending, 50)).toBe(job);
+        });
+
+        it('does not lose a notification which arrives before next() parks', async () => {
+            const job = new Job({ id: 1, queueName: 'video', data: {} });
+            let wakeDuringQuery = true;
+            vi.spyOn(SqlJobQueueStrategy.prototype, 'next').mockImplementation(async () => {
+                if (wakeDuringQuery) {
+                    wakeDuringQuery = false;
+                    (strategy as any).wake('video');
+                    return undefined;
+                }
+                return job as any;
+            });
+            initPostgres();
+
+            expect(await settledWithin(strategy.next('video'), 50)).toBe(job);
+        });
+
+        it('does not claim a job after being released by stop()', async () => {
+            const next = vi.spyOn(SqlJobQueueStrategy.prototype, 'next').mockResolvedValue(undefined);
+            vi.spyOn(SqlJobQueueStrategy.prototype, 'stop').mockResolvedValue(undefined);
+            initPostgres();
+
+            const pending = strategy.next('video');
+            await settledWithin(pending, 10);
+            await strategy.stop('video', () => Promise.resolve(undefined));
+
+            expect(await settledWithin(pending, 50)).toBeUndefined();
+            expect(next).toHaveBeenCalledTimes(1);
+        });
+
+        it('wakes a parked next() when a retry it scheduled becomes due', async () => {
+            strategy = new PgNotifyJobQueueStrategy({ safetyIntervalMs: 60_000, backoffStrategy: () => 100 });
+            (strategy as any).connectListener = vi.fn().mockResolvedValue(undefined);
+            vi.spyOn(SqlJobQueueStrategy.prototype, 'update').mockResolvedValue(undefined);
+            const next = vi.spyOn(SqlJobQueueStrategy.prototype, 'next').mockResolvedValue(undefined);
+            initPostgres();
+            const job = new Job({ id: 1, queueName: 'video', data: {}, retries: 1 });
+            job.start();
+            job.fail(new Error('boom'));
+            expect(job.state).toBe('RETRYING');
+
+            await strategy.update(job);
+            const pending = strategy.next('video');
+
+            expect(await settledWithin(pending, 50)).toBe('parked');
+            expect(await settledWithin(pending, 200)).toBeUndefined();
+            expect(next).toHaveBeenCalledTimes(2);
+        });
+
+        it('builds the listener config from replication master and extra, like TypeORM', () => {
+            initPostgres();
+            (strategy as any).dataSource.options = {
+                type: 'postgres',
+                host: 'ignored',
+                replication: {
+                    master: { host: 'primary', port: 5433, username: 'u', password: 'p', database: 'd' },
+                },
+                extra: { ssl: { rejectUnauthorized: false }, max: 10 },
+            };
+
+            expect((strategy as any).clientConfig()).toMatchObject({
+                host: 'primary',
+                port: 5433,
+                user: 'u',
+                password: 'p',
+                database: 'd',
+                ssl: { rejectUnauthorized: false },
+            });
+        });
+
+        it('accepts a listener which receives its own probe', async () => {
+            initPostgres();
             const client = new EventEmitter();
             manager.query.mockImplementation((_sql: string, [channel, payload]: string[]) => {
                 client.emit('notification', { channel, payload });
@@ -125,7 +223,7 @@ describe('PgNotifyJobQueueStrategy', () => {
 
         it('rejects a listener behind a transaction-mode pooler, which never receives the probe', async () => {
             vi.useFakeTimers();
-            strategy.init(mockInjector('postgres'));
+            initPostgres();
 
             const result = (strategy as any).probe(new EventEmitter());
             await vi.advanceTimersByTimeAsync(3_000);
