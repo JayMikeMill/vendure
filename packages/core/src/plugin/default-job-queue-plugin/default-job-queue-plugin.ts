@@ -132,11 +132,19 @@ import { DefaultJobQueueOptions } from './types';
             ? [JobRecord, JobRecordBuffer]
             : [JobRecord],
     configuration: config => {
-        const { pollInterval, concurrency, backoffStrategy, setRetries, gracefulShutdownTimeout, useNotify } =
-            DefaultJobQueuePlugin.options ?? {};
+        const {
+            pollInterval,
+            maxIdlePollInterval,
+            concurrency,
+            backoffStrategy,
+            setRetries,
+            gracefulShutdownTimeout,
+            useNotify,
+        } = DefaultJobQueuePlugin.options ?? {};
         const strategyConfig = {
             concurrency,
             pollInterval,
+            maxIdlePollInterval,
             backoffStrategy,
             setRetries,
             gracefulShutdownTimeout,

@@ -23,6 +23,14 @@ export interface DefaultJobQueueOptions {
     pollInterval?: number | ((queueName: string) => number);
     /**
      * @description
+     * When a poll finds no job, the interval before the next poll doubles, up to this
+     * value. It resets to `pollInterval` as soon as a job is found.
+     *
+     * @default pollInterval
+     */
+    maxIdlePollInterval?: number | ((queueName: string) => number);
+    /**
+     * @description
      * How many jobs from a given queue to process concurrently.
      *
      * Can be set to a function which receives the queue name and returns

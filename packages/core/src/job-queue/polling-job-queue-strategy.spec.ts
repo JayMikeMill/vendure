@@ -132,4 +132,31 @@ describe('PollingJobQueueStrategy', () => {
 
         expect(processed).toEqual(['job-1']);
     });
+
+    it('backs off up to maxIdlePollInterval while idle, and resets once a job is found', async () => {
+        strategy = new InMemoryJobQueueStrategy({
+            concurrency: 1,
+            pollInterval: 10,
+            maxIdlePollInterval: 80,
+        });
+        strategy.init({ get: () => ({ isWorker: false }) } as any);
+        const next = vi.spyOn(strategy, 'next');
+        const processed: string[] = [];
+        const process = async (job: Job) => {
+            processed.push(job.id as string);
+        };
+        activeProcess = process;
+        await strategy.start('test', process);
+
+        // Without the backoff this is ~40 polls: 10ms, then 20, 40, 80, 80, ...
+        await new Promise(resolve => setTimeout(resolve, 400));
+        expect(next.mock.calls.length).toBeLessThan(12);
+
+        await strategy.add(new Job({ id: 'job-1', queueName: 'test', data: {} }));
+        await vi.waitFor(() => expect(processed).toEqual(['job-1']), { timeout: 200, interval: 5 });
+        const callsAfterJob = next.mock.calls.length;
+        await new Promise(resolve => setTimeout(resolve, 25));
+        // Reset to pollInterval, so polls resume at 10ms rather than 80ms.
+        expect(next.mock.calls.length).toBeGreaterThan(callsAfterJob);
+    });
 });
