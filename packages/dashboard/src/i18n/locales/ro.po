@@ -4050,6 +4050,10 @@ msgstr "Parolele nu se potrivesc"
 msgid "Pick a date and time"
 msgstr "Alege data și ora"
 
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This field is invalid"
+msgstr ""
+
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 msgid "Failed to update fulfillment state"
@@ -4763,6 +4767,10 @@ msgstr "Plată soluționată"
 #: src/i18n/common-strings.ts
 msgid "orderState.Shipped"
 msgstr "Expediată"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This cannot be saved until the following are fixed:"
+msgstr ""
 
 #: src/lib/framework/layout-engine/page-layout.tsx
 msgid "Entity Information"

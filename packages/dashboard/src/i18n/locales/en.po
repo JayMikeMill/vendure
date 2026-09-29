@@ -4150,6 +4150,10 @@ msgstr "Passwords do not match"
 msgid "Pick a date and time"
 msgstr "Pick a date and time"
 
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This field is invalid"
+msgstr "This field is invalid"
+
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 msgid "Failed to update fulfillment state"
@@ -4887,6 +4891,10 @@ msgstr "Payment settled"
 #: src/i18n/common-strings.ts
 msgid "orderState.Shipped"
 msgstr "Shipped"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This cannot be saved until the following are fixed:"
+msgstr "This cannot be saved until the following are fixed:"
 
 #: src/app/routes/_authenticated/_system/healthchecks.tsx
 #~ msgid "Monitored Resources"

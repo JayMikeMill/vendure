@@ -4140,6 +4140,10 @@ msgstr "A jelszavak nem egyeznek"
 msgid "Pick a date and time"
 msgstr "Válasszon dátumot és időpontot"
 
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This field is invalid"
+msgstr ""
+
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 msgid "Failed to update fulfillment state"
@@ -4874,6 +4878,10 @@ msgstr "Fizetés teljesítve"
 #: src/i18n/common-strings.ts
 msgid "orderState.Shipped"
 msgstr "Kiszállítva"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This cannot be saved until the following are fixed:"
+msgstr ""
 
 #: src/app/routes/_authenticated/_system/healthchecks.tsx
 #~ msgid "Monitored Resources"

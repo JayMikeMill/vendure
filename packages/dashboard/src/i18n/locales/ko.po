@@ -4128,6 +4128,10 @@ msgstr ""
 msgid "Pick a date and time"
 msgstr ""
 
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This field is invalid"
+msgstr ""
+
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 msgid "Failed to update fulfillment state"
@@ -4850,6 +4854,10 @@ msgstr "결제 완료"
 #: src/i18n/common-strings.ts
 msgid "orderState.Shipped"
 msgstr "배송됨"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This cannot be saved until the following are fixed:"
+msgstr ""
 
 #: src/app/routes/_authenticated/_system/healthchecks.tsx
 #~ msgid "Monitored Resources"

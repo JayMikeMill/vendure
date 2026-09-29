@@ -68,6 +68,15 @@ export const e2eCustomFields: CustomFields = {
             label: [{ languageCode: LanguageCode.en, value: 'Feature Type' }],
             options: [{ value: 'standard' }, { value: 'premium' }],
         },
+        {
+            // Used by the #4741 tests in catalog/custom-fields.spec.ts. Nullable, and the
+            // pattern accepts the empty default, so other product tests are unaffected.
+            name: 'numericCode',
+            type: 'string',
+            nullable: true,
+            pattern: '^[0-9]*$',
+            label: [{ languageCode: LanguageCode.en, value: 'Numeric Code' }],
+        },
         // ── SEO tab ──
         {
             name: 'seoTitle',

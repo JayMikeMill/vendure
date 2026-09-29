@@ -222,13 +222,7 @@ export function useGeneratedForm<
     }, [processedEntity, processedDefaultValues, updateFields, customFieldConfig]);
 
     const form = useForm({
-        resolver: async (values, context, options) => {
-            const result = await zodResolver(schema)(values, context, options);
-            if (Object.keys(result.errors).length > 0) {
-                console.log('Zod form validation errors:', result.errors);
-            }
-            return result;
-        },
+        resolver: zodResolver(schema),
         mode: 'onChange',
         defaultValues: processedDefaultValues,
         values,
@@ -237,6 +231,21 @@ export function useGeneratedForm<
     // Proxy actually populates it. If it were only read inside the submit handler it could come
     // back empty, and `stripUntouchedTranslations` would then keep every seeded row (see its docs).
     const { dirtyFields } = form.formState;
+
+    // When editing an existing entity, validate the loaded values so that a stored value which
+    // fails validation is shown as an error, rather than only disabling the submit button.
+    //
+    // Keyed on the content of `values`, not its identity. react-hook-form resets the form, and
+    // clears its errors, whenever `values` changes by deep equality, so this re-validates after
+    // every such reset (e.g. a refetch of the same entity). Content keying also means a caller
+    // passing a new `customFieldConfig` array or `entity` object on each render does not re-run
+    // it on every render.
+    const valuesKey = JSON.stringify(values);
+    useEffect(() => {
+        if (entity) {
+            void form.trigger();
+        }
+    }, [valuesKey]);
 
     let submitHandler = (event: FormEvent): any => {
         event.preventDefault();
@@ -249,7 +258,6 @@ export function useGeneratedForm<
             const isValid = await form.trigger();
 
             if (!isValid) {
-                console.log(`Form invalid!`);
                 event.stopPropagation();
                 return;
             }
