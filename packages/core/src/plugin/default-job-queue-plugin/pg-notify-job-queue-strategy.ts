@@ -1,4 +1,4 @@
-import type { Client, ClientConfig } from 'pg';
+import type { Client, ClientConfig, Notification } from 'pg';
 import { DataSource } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
@@ -18,6 +18,9 @@ const loggerCtx = 'PgNotifyJobQueueStrategy';
 const DEFAULT_SAFETY_INTERVAL_MS = 5 * 60 * 1000;
 const MAX_RECONNECT_DELAY_MS = 30_000;
 const INITIAL_RECONNECT_DELAY_MS = 1_000;
+const PROBE_TIMEOUT_MS = 3_000;
+/** Not a valid queue name in practice, so `wake()` finds no waiters for it. */
+const PROBE_PAYLOAD = '__vendure_job_probe__';
 
 /**
  * @description
@@ -38,7 +41,8 @@ export interface PgNotifyJobQueueStrategyConfig extends PollingJobQueueStrategyC
      *
      * Set this explicitly if the primary connection goes through a connection pooler:
      * poolers in transaction mode multiplex connections and silently drop `LISTEN`, so the
-     * listener should be pointed at the direct database host.
+     * listener should be pointed at the direct database host. If the listener does not
+     * receive a test notification on connect, the strategy logs a warning and polls.
      *
      * @default undefined
      */
@@ -351,6 +355,20 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
         try {
             await client.connect();
             await client.query(`LISTEN ${CHANNEL}`);
+            if (!(await this.probe(client))) {
+                // `this.listener` is not yet set, so ending the client does not trigger
+                // `onLost()` and a reconnect.
+                void client.end().catch(() => undefined);
+                Logger.warn(
+                    'Job queue listener did not receive a test notification, so the job queue will poll instead. ' +
+                        'This usually means the connection goes through a pooler in transaction mode, ' +
+                        'which drops LISTEN. Set `listenerConnection` to the direct database host.',
+                    loggerCtx,
+                );
+                this.notifySupported = false;
+                this.wakeAll();
+                return;
+            }
             this.listener = client;
             this.reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
             Logger.verbose(`Job queue listening on "${CHANNEL}"`, loggerCtx);
@@ -363,6 +381,31 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
             Logger.warn(`Job queue listener could not connect: ${e.message as string}`, loggerCtx);
             this.scheduleReconnect();
         }
+    }
+
+    /**
+     * Sends a notification through the regular pool and checks that the listener receives
+     * it. A pooler in transaction mode accepts `LISTEN` without error but never delivers
+     * anything, which would otherwise leave every job waiting for the safety interval.
+     */
+    private probe(client: Client): Promise<boolean> {
+        return new Promise(resolve => {
+            const finish = (received: boolean) => {
+                clearTimeout(timer);
+                client.off('notification', onNotification);
+                resolve(received);
+            };
+            const onNotification = (message: Notification) => {
+                if (message.payload === PROBE_PAYLOAD) {
+                    finish(true);
+                }
+            };
+            const timer = setTimeout(() => finish(false), PROBE_TIMEOUT_MS);
+            client.on('notification', onNotification);
+            this.dataSource?.manager
+                .query('SELECT pg_notify($1, $2)', [CHANNEL, PROBE_PAYLOAD])
+                .catch(() => finish(false));
+        });
     }
 
     private scheduleReconnect() {

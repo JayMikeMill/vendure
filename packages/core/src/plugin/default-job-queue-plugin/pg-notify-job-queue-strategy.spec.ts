@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Job } from '../../job-queue';
@@ -109,6 +110,28 @@ describe('PgNotifyJobQueueStrategy', () => {
             // A wake-up which fails to send is late work, not lost work. The transaction
             // this rides on may be an order being placed.
             await expect(strategy.add(job)).resolves.toBe(job);
+        });
+
+        it('accepts a listener which receives its own probe', async () => {
+            strategy.init(mockInjector('postgres'));
+            const client = new EventEmitter();
+            manager.query.mockImplementation((_sql: string, [channel, payload]: string[]) => {
+                client.emit('notification', { channel, payload });
+                return Promise.resolve();
+            });
+
+            expect(await (strategy as any).probe(client)).toBe(true);
+        });
+
+        it('rejects a listener behind a transaction-mode pooler, which never receives the probe', async () => {
+            vi.useFakeTimers();
+            strategy.init(mockInjector('postgres'));
+
+            const result = (strategy as any).probe(new EventEmitter());
+            await vi.advanceTimersByTimeAsync(3_000);
+
+            expect(await result).toBe(false);
+            vi.useRealTimers();
         });
     });
 });
