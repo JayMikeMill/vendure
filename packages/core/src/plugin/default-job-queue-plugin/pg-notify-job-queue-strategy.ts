@@ -128,6 +128,12 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
      * parks, which is what makes a misconfigured project slower rather than broken.
      */
     private notifySupported = false;
+    /**
+     * Set when this process cannot receive notifications, e.g. behind a pooler in
+     * transaction mode. `next()` then polls, but `add()` still notifies, so other
+     * workers with a working listener are still woken.
+     */
+    private listenerUnavailable = false;
     private listenerStarted = false;
     private shuttingDown = false;
     private reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
@@ -163,7 +169,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
      */
     async next(queueName: string): Promise<Job | undefined> {
         const job = await super.next(queueName);
-        if (job || !this.notifySupported) {
+        if (job || !this.notifySupported || this.listenerUnavailable) {
             return job;
         }
         await this.waitForWork(queueName);
@@ -315,7 +321,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
     }
 
     private async connectListener(): Promise<void> {
-        if (this.shuttingDown || !this.notifySupported) {
+        if (this.shuttingDown || !this.notifySupported || this.listenerUnavailable) {
             return;
         }
         let client: Client;
@@ -330,7 +336,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
                 `Could not load the "pg" package, so the job queue will poll instead: ${e.message as string}`,
                 loggerCtx,
             );
-            this.notifySupported = false;
+            this.listenerUnavailable = true;
             this.wakeAll();
             return;
         }
@@ -365,7 +371,7 @@ export class PgNotifyJobQueueStrategy extends SqlJobQueueStrategy {
                         'which drops LISTEN. Set `listenerConnection` to the direct database host.',
                     loggerCtx,
                 );
-                this.notifySupported = false;
+                this.listenerUnavailable = true;
                 this.wakeAll();
                 return;
             }
