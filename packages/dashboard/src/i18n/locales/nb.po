@@ -436,6 +436,7 @@ msgstr "Lagerlokasjon opprettet"
 msgid "No widgets to add"
 msgstr "Ingen widgeter å legge til"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_product-variants/product-variants_.$id.tsx
@@ -816,6 +817,14 @@ msgstr "Velg en kunde for å fortsette"
 msgid "Successfully assigned option group"
 msgstr "Opsjonsgruppen ble tilordnet"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Marks the account as verified without the customer having to use a verification email."
+msgstr ""
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Allocated refund amounts must equal refund total"
+msgstr ""
+
 #: src/app/routes/_authenticated/_shipping-methods/components/shipping-method-test-result-wrapper.tsx
 msgid "Run Test"
 msgstr "Kjør test"
@@ -934,6 +943,10 @@ msgstr "Bekreft navigering"
 msgid "Complete draft"
 msgstr "Fullfør utkast"
 
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "{refundedAmount} was refunded in {refundCount} refund(s), but \"{failedTargetLabel}\" failed: {failureReason}. Check the order's payments before trying again."
+msgstr ""
+
 #: src/app/routes/_authenticated/_administrators/administrators.tsx
 #: src/app/routes/_authenticated/_api-keys/api-keys_.$id.tsx
 #: src/app/routes/_authenticated/_collections/collections_.$id.tsx
@@ -1036,6 +1049,10 @@ msgstr "Skriv inn refusjonsnotat"
 #: src/app/routes/_authenticated/_orders/orders_.draft.$id.tsx
 msgid "Order line removed"
 msgstr "Bestillingslinje fjernet"
+
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Setting a password here verifies the account immediately. Left empty, the customer has no password and cannot log in until they set one."
+msgstr ""
 
 #: src/lib/components/layout/channel-switcher.tsx
 msgid "Content:"
@@ -1160,6 +1177,8 @@ msgid "Failed to update zone"
 msgstr "Kunne ikke oppdatere sone"
 
 #: src/app/routes/_authenticated/_administrators/administrators_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_profile/profile.tsx
 #: src/app/routes/_authenticated/_profile/profile.tsx
 #: src/lib/components/login/login-form.tsx
@@ -1233,6 +1252,7 @@ msgstr "Kunne ikke kansellere ordrevarer"
 msgid "Transaction ID"
 msgstr "Transaksjons-ID"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
 #: src/app/routes/_authenticated/_product-variants/product-variants_.$id.tsx
 msgid "Allocated"
 msgstr "Allokert"
@@ -1460,6 +1480,8 @@ msgstr "Priser inkluderer mva for standard skattesone"
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
 #: src/app/routes/_authenticated/_channels/channels_.$id.tsx
+#: src/lib/components/data-input/slug-input.tsx
+#: src/lib/components/data-input/slug-input.tsx
 msgid "This field is required"
 msgstr ""
 
@@ -1796,6 +1818,10 @@ msgstr "Land"
 msgid "Loading metrics…"
 msgstr "Laster metrikker…"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Customer account verified"
+msgstr ""
+
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #~ msgid "Failed to create product options"
@@ -1917,6 +1943,7 @@ msgstr "Sett inn {row} x {col}-tabell"
 #: src/app/routes/_authenticated/_api-keys/components/rotate-api-key-button.tsx
 #: src/app/routes/_authenticated/_assets/components/manage-tags-dialog.tsx
 #: src/app/routes/_authenticated/_collections/components/move-collections-dialog.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 #: src/app/routes/_authenticated/_orders/components/add-manual-payment-dialog.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfill-order-dialog.tsx
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
@@ -1977,8 +2004,8 @@ msgstr "Ny skattekategori"
 #~ msgstr "Legg til opsjon"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "Partial refund completed"
-msgstr "Delvis refusjon fullført"
+#~ msgid "Partial refund completed"
+#~ msgstr "Delvis refusjon fullført"
 
 #: src/app/routes/_authenticated/_orders/orders_.draft.$id.tsx
 msgid "Set custom fields"
@@ -2176,6 +2203,10 @@ msgstr "Profil oppdatert"
 #: src/app/routes/_authenticated/_orders/components/payment-details.tsx
 msgid "Payment method"
 msgstr "Betalingsmetode"
+
+#: src/app/routes/_authenticated/_orders/components/payment-details.tsx
+msgid "Destination"
+msgstr ""
 
 #: src/app/routes/_authenticated/_orders/orders_.$id_.modify.tsx
 #: src/app/routes/_authenticated/_orders/orders_.$id_.modify.tsx
@@ -3199,6 +3230,10 @@ msgstr "Produktopsjoner"
 msgid "Select country"
 msgstr "Velg land"
 
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Refund only partially completed"
+msgstr ""
+
 #: src/app/routes/_authenticated/_products/components/generate-missing-variants-dialog.tsx
 #: src/app/routes/_authenticated/_products/components/generate-variants-panel.tsx
 msgid "Creating..."
@@ -3770,6 +3805,10 @@ msgstr "Kategori"
 msgid "Moving..."
 msgstr "Flytter..."
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Needed only for a customer who has no password yet, since that account cannot be logged into. Leave empty for a customer who already has one."
+msgstr ""
+
 #: src/lib/components/shared/assign-to-channel-dialog.tsx
 msgid "Assign"
 msgstr "Tildel"
@@ -4053,8 +4092,8 @@ msgid "New Stock Location"
 msgstr "Ny lagerlokasjon"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "{successfulRefundCount} payment(s) refunded before failure. Check order history for details."
-msgstr "{successfulRefundCount} betaling(er) refundert før feil. Sjekk ordrehistorikk for detaljer."
+#~ msgid "{successfulRefundCount} payment(s) refunded before failure. Check order history for details."
+#~ msgstr "{successfulRefundCount} betaling(er) refundert før feil. Sjekk ordrehistorikk for detaljer."
 
 #: src/lib/components/data-input/relation-selector.tsx
 msgid "Select item"
@@ -4110,6 +4149,10 @@ msgstr "Passordene stemmer ikke overens"
 #: src/lib/components/data-input/datetime-input.tsx
 msgid "Pick a date and time"
 msgstr "Velg dato og klokkeslett"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This field is invalid"
+msgstr ""
 
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
 #: src/app/routes/_authenticated/_orders/components/fulfillment-details.tsx
@@ -4327,6 +4370,10 @@ msgstr "Kunne ikke opprette kundegruppe"
 msgid "Failed to create role"
 msgstr "Kunne ikke opprette rolle"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Payment methods"
+msgstr ""
+
 #: src/app/routes/_authenticated/_products/products_.$id.tsx
 msgid "Product name"
 msgstr "Produktnavn"
@@ -4372,7 +4419,7 @@ msgstr "Legg til opsjonsgruppe"
 msgid "All"
 msgstr "Alle"
 
-#. placeholder {0}: formatCurrency(refund.amountToRefundTotal, order.currencyCode)
+#. placeholder {0}: formatCurrency(refund.refundTotal, order.currencyCode)
 #: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
 msgid "Refund {0}"
 msgstr "Refunder {0}"
@@ -4522,6 +4569,11 @@ msgstr "Legg til vare"
 msgid "Successfully created API key"
 msgstr "API-nøkkelen ble opprettet"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Verify account"
+msgstr ""
+
 #: src/app/routes/_authenticated/_orders/components/order-modification-preview-dialog.tsx
 msgid "Loading preview…"
 msgstr "Laster forhåndsvisning..."
@@ -4550,6 +4602,10 @@ msgstr "Fjern alternativgruppe"
 #: src/app/routes/_authenticated/_system/scheduled-tasks.tsx
 msgid "Description"
 msgstr "Beskrivelse"
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Every refund destination must draw from a payment"
+msgstr ""
 
 #: src/app/routes/_authenticated/_countries/countries_.$id.tsx
 #: src/app/routes/_authenticated/_countries/countries.tsx
@@ -4616,6 +4672,10 @@ msgstr "Filtrer"
 #: src/app/routes/_authenticated/_administrators/administrators_.$id.tsx
 msgid "Failed to update administrator"
 msgstr "Kunne ikke oppdatere administrator"
+
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "No payment or destination was selected"
+msgstr ""
 
 #: src/lib/components/data-table/views-sheet.tsx
 msgid "Manage your personal saved views for this table"
@@ -4831,6 +4891,10 @@ msgstr "Betaling gjennomført"
 #: src/i18n/common-strings.ts
 msgid "orderState.Shipped"
 msgstr "Sendt"
+
+#: src/lib/components/shared/form-error-summary.tsx
+msgid "This cannot be saved until the following are fixed:"
+msgstr ""
 
 #: src/app/routes/_authenticated/_system/healthchecks.tsx
 #~ msgid "Monitored Resources"
@@ -5579,6 +5643,10 @@ msgstr "Dette er en standardrolle og kan ikke endres"
 msgid "My saved views"
 msgstr "Mine lagrede visninger"
 
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Other refund destinations"
+msgstr ""
+
 #: src/app/routes/_authenticated/_shipping-methods/components/test-address-form.tsx
 msgid "State / Province"
 msgstr "Stat / Fylke"
@@ -5770,8 +5838,8 @@ msgid "Password reset requested"
 msgstr "Tilbakestilling av passord forespurt"
 
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
-msgid "Allocated payment amount must equal refund total"
-msgstr "Tildelt betalingsbeløp må være lik total refusjon"
+#~ msgid "Allocated payment amount must equal refund total"
+#~ msgstr "Tildelt betalingsbeløp må være lik total refusjon"
 
 #: src/app/routes/_authenticated/_products/components/create-product-options-dialog.tsx
 #~ msgid "e.g. Small"
@@ -5871,6 +5939,10 @@ msgstr "Fjern"
 #: src/app/routes/_authenticated/_customers/customers_.$id.tsx
 msgid "Failed to update customer"
 msgstr "Kunne ikke oppdatere kunde"
+
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Draw from"
+msgstr ""
 
 #: src/app/routes/_authenticated/_products/products_.$id.tsx
 msgid "Remove option groups?"
@@ -6202,6 +6274,10 @@ msgstr "Spor lager som standard"
 msgid "{selected} of {total} selected"
 msgstr "{selected} av {total} valgt"
 
+#: src/app/routes/_authenticated/_customers/customers_.$id.tsx
+msgid "Verify"
+msgstr ""
+
 #: src/app/routes/_authenticated/_shipping-methods/shipping-methods_.$id.tsx
 msgid "Successfully created shipping method"
 msgstr "Fraktmetode opprettet"
@@ -6251,6 +6327,7 @@ msgstr "Velg {0}"
 msgid "New facet values to add:"
 msgstr "Nye fasettverdier å legge til:"
 
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 #: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
 msgid "Failed to process refund"
@@ -6864,6 +6941,11 @@ msgstr "Vis resultat"
 msgid "Rows per page"
 msgstr "Rader per side"
 
+#. placeholder {0}: formatCurrency(capacity, order.currencyCode)
+#: src/app/routes/_authenticated/_orders/hooks/use-refund-order.ts
+msgid "Amounts drawn from payment {label} exceed its refundable amount of {0}"
+msgstr ""
+
 #: src/app/routes/_authenticated/_collections/components/move-collections-dialog.tsx
 msgid "Loading collections..."
 msgstr "Laster samlinger..."
@@ -7098,8 +7180,8 @@ msgid "Fulfillment ID"
 msgstr "Oppfyllelse-ID"
 
 #: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
-msgid "Select payments to refund"
-msgstr "Velg betalinger å refundere"
+#~ msgid "Select payments to refund"
+#~ msgstr "Velg betalinger å refundere"
 
 #: src/lib/components/shared/error-page.tsx
 msgid "The page you are looking for does not exist or may have been moved."
@@ -7156,6 +7238,10 @@ msgstr "Brukte global visning \"{viewName}\""
 #: src/app/routes/_authenticated/_customers/components/customer-history/customer-history-utils.tsx
 msgid "Customer registered"
 msgstr "Kunde registrert"
+
+#: src/app/routes/_authenticated/_orders/components/refund-order-dialog.tsx
+msgid "Remaining"
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/framework/defaults.ts
