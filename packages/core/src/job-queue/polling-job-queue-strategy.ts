@@ -137,10 +137,11 @@ class ActiveQueue<Data extends JobData<Data> = object> {
             let idle = false;
             try {
                 const runningJobsCount = this.activeJobs.length;
+                idle = runningJobsCount < this.concurrency;
                 for (let i = runningJobsCount; i < this.concurrency; i++) {
                     const nextJob = await this.jobQueueStrategy.next(this.queueName);
-                    idle = !nextJob;
                     if (nextJob) {
+                        idle = false;
                         // Track the job as active before awaiting the initial status update,
                         // so it stays visible to awaitRunningJobsOrTimeout() during a shutdown
                         // that races this update. If the update throws, remove it again so the

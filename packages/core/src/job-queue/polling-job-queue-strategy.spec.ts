@@ -159,4 +159,32 @@ describe('PollingJobQueueStrategy', () => {
         // Reset to pollInterval, so polls resume at 10ms rather than 80ms.
         expect(next.mock.calls.length).toBeGreaterThan(callsAfterJob);
     });
+
+    it('does not back off when one concurrency slot finds a job and another does not', async () => {
+        strategy = new InMemoryJobQueueStrategy({
+            concurrency: 2,
+            pollInterval: 10,
+            maxIdlePollInterval: 80,
+        });
+        strategy.init({ get: () => ({ isWorker: false }) } as any);
+        let calls = 0;
+        let lastCallAt = 0;
+        // The first slot of each round finds a job and the second finds nothing. Calls in
+        // the same round are well under 5ms apart; rounds are at least pollInterval apart.
+        vi.spyOn(strategy, 'next').mockImplementation(async () => {
+            calls++;
+            const newRound = Date.now() - lastCallAt > 5;
+            lastCallAt = Date.now();
+            return newRound ? new Job({ id: `job-${calls}`, queueName: 'test', data: {} }) : undefined;
+        });
+        vi.spyOn(strategy, 'update').mockResolvedValue(undefined);
+        const process = async () => undefined;
+        activeProcess = process;
+        await strategy.start('test', process);
+
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // At 10ms per round this is ~50 calls; backing off to 80ms would give ~12.
+        expect(calls).toBeGreaterThan(25);
+    });
 });
